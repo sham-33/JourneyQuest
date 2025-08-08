@@ -24,9 +24,9 @@ const upload = multer({ storage });
 const db = new pg.Client({
   user: "postgres",
   host: "localhost",
-  database: "*Database name*",
-  password: "*your password*",
-  port: 5433,
+  database: "world",
+  password: "123456789",
+  port: 5432,
 });
 db.connect();
 
