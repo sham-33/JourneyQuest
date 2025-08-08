@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - JourneyQuest</title>
+    <link rel="stylesheet" href="/styles/style.css">
+    <link rel="stylesheet" href="/styles/main.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <a href="/" class="navbar-brand">
+                    <i class="fas fa-map-marked-alt"></i> JourneyQuest
+                </a>
+                
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <span style="color: white;">Welcome, <%= currentUser.name %>!</span>
+                    <a href="/images" class="btn btn-outline">Gallery</a>
+                    <form action="/auth/logout" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-outline">Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Header -->
+    <div class="container" style="margin-top: 2rem;">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h1>My Travel Dashboard</h1>
+                    <p>Countries visited: <strong><%= total %></strong></p>
+                </div>
+                <div style="text-align: center;">
+                    <div style="width: 60px; height: 60px; background: <%= color %>; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; margin: 0 auto 0.5rem;">
+                        <%= currentUser.name.charAt(0).toUpperCase() %>
+                    </div>
+                    <small><%= currentUser.name %></small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Remove Countries -->
+    <div class="container">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+            <!-- Add Country -->
+            <div class="card">
+                <h3><i class="fas fa-plus-circle"></i> Add Country</h3>
+                <form action="/add" method="POST">
+                    <div class="form-group">
+                        <label for="country" class="form-label">Country Name</label>
+                        <input type="text" id="country" name="country" class="form-control" placeholder="e.g., France" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Add Country
+                    </button>
+                </form>
+            </div>
+
+            <!-- Remove Country -->
+            <div class="card">
+                <h3><i class="fas fa-minus-circle"></i> Remove Country</h3>
+                <form action="/delete" method="POST">
+                    <div class="form-group">
+                        <label for="country" class="form-label">Country Name</label>
+                        <input type="text" id="country" name="country" class="form-control" placeholder="e.g., France" required>
+                    </div>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-minus"></i> Remove Country
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- World Map -->
+    <div class="container">
+        <div class="map-container">
+            <h3><i class="fas fa-globe"></i> My Travel Map</h3>
+            <div class="ag-canvas">
+                <svg class="ag-canvas_svg" viewBox="0 0 500 400">
+                    <!-- World map SVG content goes here -->
+                    <!-- For now, showing a placeholder -->
+                    <rect width="500" height="400" fill="#f0f8ff" stroke="#ddd"/>
+                    <text x="250" y="200" text-anchor="middle" fill="#666" font-size="16">
+                        Interactive World Map
+                    </text>
+                    <text x="250" y="220" text-anchor="middle" fill="#999" font-size="12">
+                        Countries visited: <%= total %>
+                    </text>
+                </svg>
+            </div>
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-danger mt-3">
+                    <%= error %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="container">
+        <div class="card">
+            <h3><i class="fas fa-camera"></i> Upload Travel Photo</h3>
+            <form action="/upload" method="post" enctype="multipart/form-data">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label for="country" class="form-label">Country</label>
+                        <input type="text" name="country" class="form-control" placeholder="Country name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" name="username" class="form-control" value="<%= currentUser.name %>" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="image" class="form-label">Photo</label>
+                        <input type="file" name="Uploadimage" class="form-control" accept="image/*" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-upload"></i> Upload Photo
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="background: var(--dark-color); color: white; text-align: center; padding: 2rem 0; margin-top: 3rem;">
+        <div class="container">
+            <p>&copy; 2025 JourneyQuest. Happy travels, <%= currentUser.name %>!</p>
+        </div>
+    </footer>
+</body>
+</html>

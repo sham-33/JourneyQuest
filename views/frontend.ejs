@@ -1,135 +1,100 @@
-<%-include("partials/header.ejs") %>
-<!-- Body Section -->
-<main>
-  <!-- Home Section -->
-  <div class="px-4 pt-5 text-center border-bottom custom-bg">
-    <div class="title-box" style="color: white">
-      <h1 class="display-4 fw-bold">Welcome to JourneyQuest</h1>
-      <div class="col-lg-6 mx-auto">
-        <p class="lead mb-4">Your quest for the perfect escape begins here</p>
-        <form action="/getstart" method="GET">
-          <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mb-5">
-            <a
-              href="http://127.0.0.1:5000"
-              class="icon-link"
-              style="font-size: 20px">
-              Book a flight
-              <svg class="bi"><use xlink:href="#chevron-right"></use></svg>
-            </a>
-            <button
-              type="submit"
-              class="btn btn-primary btn-lg px-4 me-sm-3"
-              fdprocessedid="hllcfw">
-              Get Started
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JourneyQuest - Track Your Travels</title>
+    <link rel="stylesheet" href="/styles/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <a href="/" class="navbar-brand">
+                    <i class="fas fa-map-marked-alt"></i> JourneyQuest
+                </a>
+                
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <span style="color: white;">Welcome, <%= user.name %>!</span>
+                        <a href="/dashboard" class="btn btn-outline">Dashboard</a>
+                        <form action="/auth/logout" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-outline">Logout</button>
+                        </form>
+                    <% } else { %>
+                        <a href="/auth/login" class="btn btn-outline">Login</a>
+                        <a href="/auth/register" class="btn btn-primary">Sign Up</a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-  <!-- About Section with Background Image -->
-  <div
-    id="about"
-    class="row flex-lg-row-reverse align-items-center g-5 py-5 about">
-    <div class="col-10 col-sm-8 col-lg-6">
-      <img
-        src=".styles/friends-planning-trip-stockcake.jpg"
-        class="d-block mx-lg-auto img-fluid"
-        alt="Bootstrap Themes"
-        width="500"
-        height="300"
-        loading="lazy" />
-    </div>
-    <div class="col-lg-6">
-      <h1 class="display-5 fw-bold text-body-emphasis lh-1 mb-3">About</h1>
-      <p class="lead">
-        We are dedicated to helping travelers preserve and celebrate their
-        unforgettable experiences from around the world. Our platform provides
-        an innovative space where individuals can store, share, and relive the
-        memories of the countries they’ve visited. With a focus on simplicity
-        and creativity, our team works to ensure that every journey is captured
-        in a way that brings lasting value and inspires future adventures.
-      </p>
-    </div>
-  </div>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1><i class="fas fa-globe-americas"></i> Welcome to JourneyQuest</h1>
+            <p>Track your travels, preserve your memories, and explore the world one country at a time.</p>
+            
+            <% if (typeof user !== 'undefined' && user) { %>
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <a href="/dashboard" class="btn btn-primary">
+                        <i class="fas fa-map"></i> View My Map
+                    </a>
+                    <a href="/images" class="btn btn-outline">
+                        <i class="fas fa-images"></i> Photo Gallery
+                    </a>
+                </div>
+            <% } else { %>
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <a href="/auth/register" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Start Your Journey
+                    </a>
+                    <a href="/auth/login" class="btn btn-outline">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </a>
+                </div>
+            <% } %>
+        </div>
+    </section>
 
-  <div id="Upload" class="container col-xl-10 col-xxl-8 px-4 py-5">
-    <div class="row align-items-center g-lg-5 py-5">
-      <div class="col-lg-7 text-center text-lg-start">
-        <h1
-          class="display-4 fw-bold lh-1 text-body-emphasis mb-3"
-          style="font-size: 50px">
-          Upload the images
-        </h1>
-        <p class="lead">
-          The Upload section allows users to easily upload and store their
-          travel images, providing a secure and efficient way to preserve their
-          memories. Travelers can share their experiences by uploading photos,
-          ensuring their journeys are captured and stored for future reference,
-          all within a user-friendly and seamless platform.
-        </p>
-      </div>
-      <div class="col-md-10 mx-auto col-lg-5 upload-div">
-        <form
-          action="/upload"
-          method="post"
-          enctype="multipart/form-data"
-          class="p-4 p-md-5 border rounded-3 form-div">
-          <div class="form-floating mb-3">
-            <input
-              type="text"
-              class="form-control"
-              id="floatingInput"
-              placeholder=""
-              fdprocessedid="ablbu"
-              name="country" />
-            <label for="floatingInput">Visited Country</label>
-          </div>
-          <div class="form-floating mb-3">
-            <input
-              type="text"
-              class="form-control"
-              id="floatingInput"
-              placeholder=""
-              fdprocessedid="ablbu"
-              name="username" />
-            <label for="floatingInput">Username</label>
-          </div>
-          <input type="file" name="Uploadimage" style="margin-bottom: 15px" />
-          <button
-            class="w-100 btn btn-lg btn-primary"
-            type="submit"
-            fdprocessedid="0kyh2a">
-            Upload
-          </button>
-          <!-- <hr class="my-4">
-                <small class="text-body-secondary">By clicking upload, you agree to the add the image.</small> -->
-        </form>
-      </div>
-    </div>
-  </div>
+    <!-- Features Section -->
+    <section class="py-5" style="background: var(--light-color);">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2>Why Choose JourneyQuest?</h2>
+                <p>Simple, secure, and beautiful travel tracking</p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                <div class="card text-center">
+                    <i class="fas fa-map-marked-alt" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                    <h3>Interactive Map</h3>
+                    <p>Visualize your travels on a beautiful world map and see your progress.</p>
+                </div>
+                
+                <div class="card text-center">
+                    <i class="fas fa-camera" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                    <h3>Photo Memories</h3>
+                    <p>Upload and organize your travel photos by country and destination.</p>
+                </div>
+                
+                <div class="card text-center">
+                    <i class="fas fa-shield-alt" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                    <h3>Secure & Private</h3>
+                    <p>Your travel data is protected with industry-standard security.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  <div id="views" class="px-4 py-5 my-5 text-center">
-    <h1 class="display-5 fw-bold text-body-emphasis">View Images</h1>
-    <div class="col-lg-6 mx-auto">
-      <p class="lead mb-4">
-        The View section enables users to browse their uploaded images,
-        categorized by the countries they've visited. It offers a seamless way
-        to explore and revisit travel memories, allowing users to view photos
-        from specific destinations and share their experiences.
-      </p>
-      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-        <form action="/images" method="GET">
-          <button
-            type="submit"
-            class="btn btn-primary btn-lg px-4 gap-3"
-            fdprocessedid="aebcbi">
-            view
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-</main>
-<%- include("partials/footer.ejs") %>
+    <!-- Footer -->
+    <footer style="background: var(--dark-color); color: white; text-align: center; padding: 2rem 0;">
+        <div class="container">
+            <p>&copy; 2025 JourneyQuest. Track your adventures, preserve your memories.</p>
+        </div>
+    </footer>
+</body>
+</html>
