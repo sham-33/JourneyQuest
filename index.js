@@ -9,7 +9,7 @@ import session from "express-session";
 import { authenticateToken, checkAuthStatus, generateToken } from "./middleware/auth.js";
 
 const app = express();
-const port = 3000;
+const port = 3001;
 env.config();
 
 //uploading file
@@ -38,12 +38,86 @@ async function initializeDatabase() {
   try {
     await db.connect();
     
-    // Add email and password columns if they don't exist
-    await db.query(`
-      ALTER TABLE users 
-      ADD COLUMN IF NOT EXISTS email VARCHAR(255) UNIQUE,
-      ADD COLUMN IF NOT EXISTS password VARCHAR(255)
-    `);
+    // First, check if users table exists and fix the id column
+    try {
+      // Check if the id column is properly set up as SERIAL
+      const checkSerial = await db.query(`
+        SELECT column_default 
+        FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'id'
+      `);
+      
+      if (checkSerial.rows.length === 0 || !checkSerial.rows[0].column_default?.includes('nextval')) {
+        console.log('Fixing users table id column...');
+        
+        // Drop and recreate the users table with proper SERIAL id
+        await db.query(`DROP TABLE IF EXISTS visited_countries CASCADE`);
+        await db.query(`DROP TABLE IF EXISTS image_table CASCADE`);
+        await db.query(`DROP TABLE IF EXISTS users CASCADE`);
+        
+        // Recreate users table with proper SERIAL id
+        await db.query(`
+          CREATE TABLE users(
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(15) UNIQUE NOT NULL,
+            color VARCHAR(15),
+            email VARCHAR(255) UNIQUE,
+            password VARCHAR(255)
+          )
+        `);
+        
+        // Recreate visited_countries table
+        await db.query(`
+          CREATE TABLE visited_countries(
+            id SERIAL PRIMARY KEY,
+            country_code CHAR(2) NOT NULL,
+            user_id INTEGER REFERENCES users(id)
+          )
+        `);
+        
+        // Recreate image_table
+        await db.query(`
+          CREATE TABLE IF NOT EXISTS image_table (
+            id SERIAL PRIMARY KEY,
+            country_code CHAR(2) NOT NULL,
+            image VARCHAR(500) NOT NULL,
+            user_id INTEGER REFERENCES users(id),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+        
+        console.log('Users table recreated with proper SERIAL id');
+      } else {
+        // Just add email and password columns if they don't exist
+        await db.query(`
+          ALTER TABLE users 
+          ADD COLUMN IF NOT EXISTS email VARCHAR(255) UNIQUE,
+          ADD COLUMN IF NOT EXISTS password VARCHAR(255)
+        `);
+      }
+    } catch (error) {
+      console.log('Creating fresh database tables...');
+      
+      // Create users table with proper SERIAL id
+      await db.query(`
+        CREATE TABLE IF NOT EXISTS users(
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(15) UNIQUE NOT NULL,
+          color VARCHAR(15),
+          email VARCHAR(255) UNIQUE,
+          password VARCHAR(255)
+        )
+      `);
+      
+      // Create other tables
+      await db.query(`
+        CREATE TABLE IF NOT EXISTS visited_countries(
+          id SERIAL PRIMARY KEY,
+          country_code CHAR(2) NOT NULL,
+          user_id INTEGER REFERENCES users(id)
+        )
+      `);
+    }
     
     // Create image_table if it doesn't exist
     await db.query(`
@@ -335,6 +409,101 @@ app.post("/getimages", async (req, res) => {
 app.get("/getstart", authenticateToken, async (req, res) => {
   res.redirect('/dashboard');
 });
+
+// API endpoints for AJAX requests
+app.post("/api/add-country", authenticateToken, async (req, res) => {
+  const input = req.body.country;
+  const userId = req.user.id;
+
+  try {
+    const result = await db.query(
+      "SELECT country_code FROM countries WHERE LOWER(country_name) LIKE  $1 || '%' ;",
+      [input.toLowerCase()]
+    );
+
+    const data = result.rows[0];
+    const countryCode = data.country_code;
+    
+    try {
+      await db.query(
+        "INSERT INTO visited_countries (country_code,user_id) VALUES ($1, $2)",
+        [countryCode, userId]
+      );
+      
+      const countries = await checkVisitedByUser(userId);
+      
+      res.json({
+        success: true,
+        message: `${input} added successfully!`,
+        countryCode: countryCode,
+        total: countries.length
+      });
+    } catch (err) {
+      console.log(err);
+      res.json({
+        success: false,
+        message: "Country is already visited, try again."
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.json({
+      success: false,
+      message: "Country does not exist, try again."
+    });
+  }
+});
+
+app.post("/api/remove-country", authenticateToken, async (req, res) => {
+  const input = req.body.country;
+  const userId = req.user.id;
+  
+  try {
+    const result = await db.query(
+      "SELECT country_code FROM countries WHERE LOWER(country_name) LIKE  $1 || '%' ;",
+      [input.toLowerCase()]
+    );
+
+    const data = result.rows[0];
+    const countryCode = data.country_code;
+    
+    try {
+      const deleteResult = await db.query(
+        "DELETE FROM visited_countries WHERE country_code=$1 AND user_id=$2",
+        [countryCode, userId]
+      );
+      
+      if (deleteResult.rowCount === 0) {
+        res.json({
+          success: false,
+          message: "Country is not in your visited list."
+        });
+      } else {
+        const countries = await checkVisitedByUser(userId);
+        
+        res.json({
+          success: true,
+          message: `${input} removed successfully!`,
+          countryCode: countryCode,
+          total: countries.length
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      res.json({
+        success: false,
+        message: "Error removing country."
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.json({
+      success: false,
+      message: "Country does not exist, try again."
+    });
+  }
+});
+
 app.post("/add", authenticateToken, async (req, res) => {
   const input = req.body["country"];
   const userId = req.user.id;
@@ -358,7 +527,7 @@ app.post("/add", authenticateToken, async (req, res) => {
       const countries = await checkVisitedByUser(userId);
       const currentuser = await getUserById(userId);
       const allUsers = await db.query("SELECT * FROM users");
-      res.render("index.ejs", {
+      res.render("dashboard.ejs", {
         countries: countries,
         total: countries.length,
         users: allUsers.rows,
@@ -372,7 +541,7 @@ app.post("/add", authenticateToken, async (req, res) => {
     const countries = await checkVisitedByUser(userId);
     const currentuser = await getUserById(userId);
     const allUsers = await db.query("SELECT * FROM users");
-    res.render("index.ejs", {
+    res.render("dashboard.ejs", {
       countries: countries,
       total: countries.length,
       users: allUsers.rows,
@@ -407,7 +576,7 @@ app.post("/delete", authenticateToken, async (req, res) => {
       const countries = await checkVisitedByUser(userId);
       const currentuser = await getUserById(userId);
       const allUsers = await db.query("SELECT * FROM users");
-      res.render("index.ejs", {
+      res.render("dashboard.ejs", {
         countries: countries,
         total: countries.length,
         users: allUsers.rows,
@@ -421,13 +590,13 @@ app.post("/delete", authenticateToken, async (req, res) => {
     const countries = await checkVisitedByUser(userId);
     const currentuser = await getUserById(userId);
     const allUsers = await db.query("SELECT * FROM users");
-    res.render("index.ejs", {
+    res.render("dashboard.ejs", {
       countries: countries,
       total: countries.length,
       users: allUsers.rows,
       color: currentuser.color,
       currentUser: currentuser,
-      error: " country does not exist try again.",
+      error: " country does not exits try again.",
     });
   }
 });
